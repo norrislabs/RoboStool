@@ -1,0 +1,44 @@
+' =========================================================================
+'   File...... HB25Test.bs2
+'   Purpose... RoboStool HB-25 Test
+'   Author.... Steve Norris
+'   E-mail.... steve@norrislabs.com
+'   Updated... 05/20/2008
+'
+'   {$STAMP BS2}
+'   {$PBASIC 2.5}
+
+' -----[ I/O Definitions ]-------------------------------------------------
+
+HB25            PIN     15              ' I/O Pin For HB-25
+
+
+' -----[ Variables ]-------------------------------------------------------
+
+index           VAR     Word            ' Counter
+
+
+' -----[ Initialization ]--------------------------------------------------
+
+DO : LOOP UNTIL HB25 = 1                ' Wait For HB-25 Power Up
+LOW HB25                                ' Make I/O Pin Output/Low
+PAUSE 5                                 ' Wait For HB-25 To Initialize
+PULSOUT HB25, 750                       ' Stop Motor 1
+
+PAUSE 1000
+
+' -----[ Program Code ]----------------------------------------------------
+
+Main:
+
+  PULSOUT HB25, 975
+  PAUSE 5000
+  PULSOUT HB25, 750
+
+  PAUSE 2000
+
+  PULSOUT HB25, 525
+  PAUSE 5000
+  PULSOUT HB25, 750
+
+  STOP

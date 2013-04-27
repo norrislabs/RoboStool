@@ -1,0 +1,159 @@
+'-----------------------------------------------
+' DriveTest.bs2
+' This code is a simple test for RoboStool.
+'-----------------------------------------------
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+'--- Command Value Constants ---
+QPOS               CON    $08   'Query Position
+QSPD               CON    $10   'Query Speed
+CHFA               CON    $18   'Check for Arrival
+TRVL               CON    $20   'Travel Number of Positions
+CLRP               CON    $28   'Clear Position
+SREV               CON    $30   'Set Orientation as Reversed
+STXD               CON    $38   'Set TX Delay
+SMAX               CON    $40   'Set Speed Maximum
+SSRR               CON    $48   'Set Speed Ramp Rate
+
+'--- User Constants & Variables ---
+AllWheels          CON    0
+RightWheel         CON    1     'ID of the right side Position Controller
+LeftWheel          CON    2     'ID of the left side Position Controller
+BaudValue          CON    32    'for 19.2kbps
+
+Pin_Drive          CON    12    'communication bus pin
+Pin_Lift           PIN    15    'lift HB-25 pin
+
+Wheel              VAR    Byte  'Specifies which wheel to command for subroutines
+Distance           VAR    Word  'Used to set the travel distance
+Degrees            VAR    Word  'Degress to spin
+Speed              VAR    Word  'Used to set the maximum speed
+RxData             VAR    Word  'Used to receive data
+Index              VAR    Byte
+Arrived            VAR    Byte
+
+'--- Initialization ---
+GOSUB InitDrive
+GOSUB InitLift
+
+PAUSE 2000
+
+'GOSUB LiftUp
+
+'Speed = 18
+'Wheel = AllWheels
+'GOSUB SetSpeed
+
+'Go forward
+'Wheel = AllWheels
+'Distance = 200
+'GOSUB GoDistance
+'PAUSE 1000
+
+' Left turn
+'Speed = 14
+'Wheel = LeftWheel
+'GOSUB SetSpeed
+'PAUSE 1000
+
+'Speed = 18
+'Wheel = LeftWheel
+'GOSUB SetSpeed
+
+'GOSUB WaitArrived
+'STOP
+
+FOR index = 1 TO 4
+  'Go forward
+  Wheel = AllWheels
+  Distance = 150
+  GOSUB GoDistance
+  GOSUB WaitArrived
+
+  Degrees = 180
+  GOSUB SpinCW
+NEXT
+
+'GOSUB LiftDown
+
+STOP
+
+'--- Subroutines ---
+InitDrive:
+  HIGH Pin_Drive
+  PAUSE 200
+  GOSUB SoftReset
+  SEROUT Pin_Drive, BaudValue, [SREV + RightWheel] 'Reverses the sensor on the right
+  RETURN
+
+SoftReset:
+  FOR index = 1 TO 3
+    SEROUT Pin_Drive, BaudValue, [CLRP + RightWheel]
+    SEROUT Pin_Drive, BaudValue, [CLRP + LeftWheel]
+    PAUSE 100
+  NEXT
+  RETURN
+
+GoDistance:
+  SEROUT Pin_Drive, BaudValue, [TRVL + Wheel]
+  SEROUT Pin_Drive, BaudValue, [Distance.HIGHBYTE, Distance.LOWBYTE]
+  RETURN
+
+SetSpeed:
+  SEROUT Pin_Drive, BaudValue, [SMAX + Wheel]
+  SEROUT Pin_Drive, BaudValue, [Speed.HIGHBYTE, Speed.LOWBYTE]
+  RETURN
+
+WaitArrived:
+  DO
+    GOSUB HasArrived
+    IF Arrived = $FF THEN
+      RETURN
+    ENDIF
+  LOOP
+
+HasArrived:
+  SEROUT Pin_Drive, BaudValue, [CHFA + RightWheel,1]
+  SERIN Pin_Drive, BaudValue, [Arrived]
+  RETURN
+
+SpinCCW:
+  Wheel = RightWheel
+  Distance = Degrees / 6
+  GOSUB GoDistance
+  Wheel = LeftWheel
+  Distance = -(Degrees / 6)
+  GOSUB GoDistance
+  GOSUB WaitArrived
+  RETURN
+
+SpinCW:
+  Wheel = LeftWheel
+  Distance = Degrees / 6
+  GOSUB GoDistance
+  Wheel = RightWheel
+  Distance = -(Degrees / 6)
+  GOSUB GoDistance
+  GOSUB WaitArrived
+  RETURN
+
+InitLift:
+  DO : LOOP UNTIL Pin_Lift = 1            ' Wait For HB-25 Power Up
+  LOW Pin_Lift                            ' Make I/O Pin Output/Low
+  PAUSE 5                                 ' Wait For HB-25 To Initialize
+  PULSOUT Pin_Lift, 750                   ' Stop Motor
+  PAUSE 500
+  RETURN
+
+LiftUp:
+  PULSOUT Pin_Lift, 525
+  PAUSE 9000
+  PULSOUT Pin_Lift, 750
+  RETURN
+
+LiftDown:
+  PULSOUT Pin_Lift, 975
+  PAUSE 8000
+  PULSOUT Pin_Lift, 750
+  RETURN

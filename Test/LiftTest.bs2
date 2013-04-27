@@ -1,0 +1,52 @@
+' =========================================================================
+'   File...... LiftTest.bs2
+'   Purpose... RoboStool Lift Test
+'   Author.... Steve Norris
+'   E-mail.... steve@norrislabs.com
+'   Updated... 05/17/2008
+'
+'   {$STAMP BS2}
+'   {$PBASIC 2.5}
+
+' -----[ I/O Definitions ]-------------------------------------------------
+
+HB25            PIN     15              ' I/O Pin For HB-25
+
+
+' -----[ Variables ]-------------------------------------------------------
+
+index           VAR     Word            ' Counter
+
+
+' -----[ Initialization ]--------------------------------------------------
+
+DO : LOOP UNTIL HB25 = 1                ' Wait For HB-25 Power Up
+LOW HB25                                ' Make I/O Pin Output/Low
+PAUSE 5                                 ' Wait For HB-25 To Initialize
+PULSOUT HB25, 750                       ' Stop Motor 1
+
+PAUSE 1000
+
+' -----[ Program Code ]----------------------------------------------------
+
+Main:
+  FOR index = 1 TO 10
+    GOSUB LiftUp
+    PAUSE 2000
+    GOSUB LiftDown
+    PAUSE 2000
+  NEXT
+
+  STOP
+
+LiftUp:
+  PULSOUT HB25, 525
+  PAUSE 9000
+  PULSOUT HB25, 750
+  RETURN
+
+LiftDown:
+  PULSOUT HB25, 975
+  PAUSE 8000
+  PULSOUT HB25, 750
+  RETURN
